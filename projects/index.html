@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Projects · Philip Grundy</title>
+<meta name="description" content="Data science and machine learning projects by Philip Grundy, each with a write-up of what I tried, what worked and how I measured it.">
+<meta property="og:title" content="Projects · Philip Grundy">
+<meta property="og:description" content="Data science and machine learning projects, each with a write-up.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#f4f5f3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#070b18" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/assets/img/favicon.svg?v=2" type="image/svg+xml">
+<script>try{var t=localStorage.getItem("theme");if(t==="dark"||t==="light")document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="/assets/css/site.css?v=8">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="wrap">
+    <div>
+      <p class="site-title site-title--small"><a href="/">Philip Grundy</a></p>
+    </div>
+    <button class="theme-toggle" type="button" aria-label="Toggle colour theme" hidden><svg class="theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg><svg class="theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.9 13.4A9 9 0 0 1 10.6 3.1a9 9 0 1 0 10.3 10.3Z"/></svg></button>
+  </div>
+</header>
+
+<main id="main">
+  <div class="wrap">
+    <h1 class="sr-only">Projects</h1>
+    <p class="page-intro">Things I've built. Each one has a write-up of what I tried, what worked and how I measured it.</p>
+
+    <div class="project-grid">
+      <article class="box project-card" aria-labelledby="p-suika">
+        <h2 class="box-title" id="p-suika">Suika bot</h2>
+        <div class="box-body">
+          <a class="thumb" href="/projects/suika/" aria-label="Suika bot write-up"><svg class="board-svg" viewBox="49 -6 556 720" role="img" aria-label="A Suika board from the bot's best game, packed with fruit around a watermelon"><rect class="board-bg" x="49" y="-6" width="556" height="720"/><line class="board-line" x1="55" y1="70" x2="599" y2="70"/><path class="board-wall" d="M51 24 V712 H603 V24"/><circle cx="327" cy="673.2" r="36" fill="#f4a259"/><circle cx="315.5" cy="661.7" r="10.8" fill="#fff" fill-opacity=".22"/><circle cx="265.6" cy="689.8" r="18.4" fill="#d62839"/><circle cx="259.7" cy="683.9" r="5.5" fill="#fff" fill-opacity=".22"/><circle cx="105.3" cy="675.6" r="33" fill="#7b3fa0"/><circle cx="94.7" cy="665.1" r="9.9" fill="#fff" fill-opacity=".22"/><circle cx="78.4" cy="626.8" r="23.6" fill="#f25f7a"/><circle cx="70.8" cy="619.2" r="7.1" fill="#fff" fill-opacity=".22"/><circle cx="203" cy="563.9" r="115.9" fill="#9bd770"/><circle cx="165.9" cy="526.9" r="34.8" fill="#fff" fill-opacity=".22"/><circle cx="72.4" cy="585.8" r="18.4" fill="#d62839"/><circle cx="66.6" cy="579.9" r="5.5" fill="#fff" fill-opacity=".22"/><circle cx="322" cy="621.1" r="18.4" fill="#d62839"/><circle cx="316.1" cy="615.2" r="5.5" fill="#fff" fill-opacity=".22"/><circle cx="277.1" cy="452.9" r="18.4" fill="#d62839"/><circle cx="271.2" cy="447" r="5.5" fill="#fff" fill-opacity=".22"/><circle cx="465.4" cy="573.4" r="135" fill="#2e8b3d"/><circle cx="422.2" cy="530.2" r="40.5" fill="#fff" fill-opacity=".22"/><circle cx="376.7" cy="442" r="23.6" fill="#f25f7a"/><circle cx="369.2" cy="434.5" r="7.1" fill="#fff" fill-opacity=".22"/><circle cx="563.3" cy="433.8" r="36" fill="#f4a259"/><circle cx="551.7" cy="422.3" r="10.8" fill="#fff" fill-opacity=".22"/><circle cx="454.7" cy="406.1" r="33" fill="#7b3fa0"/><circle cx="444.1" cy="395.5" r="9.9" fill="#fff" fill-opacity=".22"/><circle cx="509.5" cy="426.6" r="18.4" fill="#d62839"/><circle cx="503.6" cy="420.8" r="5.5" fill="#fff" fill-opacity=".22"/><circle cx="538.4" cy="369.7" r="33" fill="#7b3fa0"/><circle cx="527.9" cy="359.1" r="9.9" fill="#fff" fill-opacity=".22"/><circle cx="78.1" cy="486.1" r="23.6" fill="#f25f7a"/><circle cx="70.5" cy="478.6" r="7.1" fill="#fff" fill-opacity=".22"/><circle cx="113.4" cy="465.3" r="18.4" fill="#d62839"/><circle cx="107.5" cy="459.4" r="5.5" fill="#fff" fill-opacity=".22"/><circle cx="451.2" cy="289.8" r="83.6" fill="#f7a8b8"/><circle cx="424.4" cy="263" r="25.1" fill="#fff" fill-opacity=".22"/><circle cx="326.7" cy="474.3" r="36" fill="#f4a259"/><circle cx="315.1" cy="462.7" r="10.8" fill="#fff" fill-opacity=".22"/><circle cx="565" cy="264.6" r="33" fill="#7b3fa0"/><circle cx="554.4" cy="254.1" r="9.9" fill="#fff" fill-opacity=".22"/><circle cx="572.4" cy="324.5" r="23.6" fill="#f25f7a"/><circle cx="564.9" cy="316.9" r="7.1" fill="#fff" fill-opacity=".22"/><circle cx="135.3" cy="415.6" r="36" fill="#f4a259"/><circle cx="123.8" cy="404" r="10.8" fill="#fff" fill-opacity=".22"/><circle cx="254.2" cy="321.1" r="115.9" fill="#9bd770"/><circle cx="217.1" cy="284" r="34.8" fill="#fff" fill-opacity=".22"/></svg></a>
+          <p>A bot trained to play Suika Game through self-play, combining a neural network with a search over possible drops. Built on a Rust physics engine, with a live demonstration running in your browser.</p>
+          <ul class="tags"><li>Python</li><li>PyTorch</li><li>Reinforcement learning</li><li>Rust</li><li>WebAssembly</li></ul>
+          <div class="card-links"><a href="/projects/suika/">Read the write-up →</a> <a href="/projects/suika/#watch">Watch it play</a></div>
+        </div>
+      </article>
+
+      <article class="box project-card" aria-labelledby="p-shaders">
+        <h2 class="box-title" id="p-shaders">Shader experiments</h2>
+        <div class="box-body">
+          <p>Four experiments in maths, motion and colour: a Mandelbrot zoom, Game of Life, rippling noise and chromatic shear. Running live in your browser, with the GLSL source alongside each one.</p>
+          <ul class="tags"><li>GLSL</li><li>WebGL 2</li><li>Procedural graphics</li></ul>
+          <div class="card-links"><a href="/projects/shaders/">Explore the live shaders →</a></div>
+        </div>
+      </article>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p>© <span data-year>2026</span> Philip Grundy</p>
+  </div>
+</footer>
+
+<script src="/assets/js/site.js?v=3" defer></script>
+</body>
+</html>

@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Teaching a neural network to play Suika Game · Philip Grundy</title>
+<meta name="description" content="How I trained a neural network to play Suika, the watermelon game, through self-play: the engine, the search, the value network, the results and what I learned measuring them.">
+<meta property="og:title" content="Teaching a neural network to play Suika Game · Philip Grundy">
+<meta property="og:description" content="A self-play bot for the watermelon game that clears a double watermelon in about half its games.">
+<meta property="og:type" content="article">
+<meta name="theme-color" content="#f4f5f3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#070b18" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/assets/img/favicon.svg?v=2" type="image/svg+xml">
+<script>try{var t=localStorage.getItem("theme");if(t==="dark"||t==="light")document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="/assets/css/site.css?v=8">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="wrap">
+    <div>
+      <p class="site-title site-title--small"><a href="/">Philip Grundy</a></p>
+    </div>
+    <button class="theme-toggle" type="button" aria-label="Toggle colour theme" hidden><svg class="theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg><svg class="theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.9 13.4A9 9 0 0 1 10.6 3.1a9 9 0 1 0 10.3 10.3Z"/></svg></button>
+  </div>
+</header>
+
+<main id="main">
+  <div class="wrap">
+    <article class="box box--narrow">
+      <p class="box-title">Project: Suika bot</p>
+      <div class="box-body">
+        <div class="prose">
+          <h1 class="article-title">Teaching a neural network to play Suika Game</h1>
+          <p class="lede">I trained a bot to play Suika Game through self-play. It combines a neural network with a search over possible drops, with the aim of merging two watermelons consistently.</p>
+        </div>
+
+        <div class="facts">
+          <div class="fact"><span class="num">53%</span><span class="lbl">of 192 test games with a double watermelon, using a wider search</span></div>
+          <div class="fact"><span class="num">0%</span><span class="lbl">for the rule-based baseline in 192 test games</span></div>
+          <div class="fact"><span class="num">150k+</span><span class="lbl">games of self-play training</span></div>
+          <div class="fact"><span class="num">9</span><span class="lbl">double watermelons in its best game (3,000 drops)</span></div>
+        </div>
+
+        <p class="card-links"><a href="#watch">Watch it play</a> <a href="#how">How it works</a> <a href="#results">Results</a> <a href="#learned">What I learned</a></p>
+
+        <div class="prose">
+          <h2 id="watch">Watch it play</h2>
+        </div>
+        <div class="suika-player watch-player" data-suika data-wasm="/assets/suika/engine.wasm" data-game="/assets/suika/best-game.json" data-start="345" data-speed="4">
+          <div class="suika-stage">
+            <canvas width="556" height="720" role="img" aria-label="The Suika bot playing its best game: fruit drop into a box and merge into bigger fruit."></canvas>
+            <div class="suika-flash" aria-hidden="true">Double watermelon!</div>
+          </div>
+          <div class="suika-hud">
+            <span>Drop <strong data-drop>0</strong></span>
+            <span>Score <strong data-score>0</strong></span>
+            <span>Double watermelons <strong data-clears>0</strong></span>
+          </div>
+          <div class="suika-controls"><button class="btn" type="button" data-toggle>❚❚ Pause</button></div>
+          <p class="muted" data-status></p>
+          <p class="muted">This is the bot's best game, replayed in your browser at 4× speed. It's not a video: the same physics engine the bot trained on runs here as WebAssembly, and because the engine is deterministic, the game plays out exactly as it did in testing.</p>
+        </div>
+
+        <div class="prose">
+          <h2 id="game">The game</h2>
+          <p>In Suika, fruit drop into a box one at a time. When two of the same fruit touch, they merge into the next size up: cherries become strawberries, and so on up to melons and watermelons. If the pile reaches the top, the game is over.</p>
+          <p>Merging two watermelons clears them from the board. Building that pair takes planning: smaller fruit can block the merges needed to reach it. I focused on how often the bot could achieve this and whether it could keep playing afterwards.</p>
+
+          <h2 id="how">How it works</h2>
+        </div>
+
+        <figure class="diagram">
+          <svg class="diagram-wide" viewBox="-4 -4 768 252" role="img" aria-label="Diagram: the game engine feeds a search over drop positions; a value network scores each resulting board; the bot plays the best move, and its games train the network.">
+            <defs><marker id="arrow-w" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow-head" d="M0 0 L10 5 L0 10 z"/></marker></defs>
+            <rect class="node" x="0" y="20" width="166" height="104" rx="12"/>
+            <text class="node-title" x="14" y="46">Game engine</text>
+            <text class="node-text" x="14" y="70">Rust port of the game's</text>
+            <text class="node-text" x="14" y="88">physics. Same seed and</text>
+            <text class="node-text" x="14" y="106">drops, same game.</text>
+            <rect class="node" x="198" y="20" width="166" height="104" rx="12"/>
+            <text class="node-title" x="212" y="46">Search</text>
+            <text class="node-text" x="212" y="70">Try ~32 drop spots (and</text>
+            <text class="node-text" x="212" y="88">when), then the next</text>
+            <text class="node-text" x="212" y="106">fruit for the best 4.</text>
+            <rect class="node" x="396" y="20" width="166" height="104" rx="12"/>
+            <text class="node-title" x="410" y="46">Value network</text>
+            <text class="node-text" x="410" y="70">A small transformer reads</text>
+            <text class="node-text" x="410" y="88">the fruit as tokens and</text>
+            <text class="node-text" x="410" y="106">scores each result.</text>
+            <rect class="node" x="594" y="20" width="166" height="104" rx="12"/>
+            <text class="node-title" x="608" y="46">Best move</text>
+            <text class="node-text" x="608" y="70">Drop where the network</text>
+            <text class="node-text" x="608" y="88">expects the game to</text>
+            <text class="node-text" x="608" y="106">last longest.</text>
+            <line class="arrow" x1="168" y1="72" x2="194" y2="72" marker-end="url(#arrow-w)"/>
+            <line class="arrow" x1="366" y1="72" x2="392" y2="72" marker-end="url(#arrow-w)"/>
+            <line class="arrow" x1="564" y1="72" x2="590" y2="72" marker-end="url(#arrow-w)"/>
+            <path class="arrow" d="M677 126 V190 H479 V130" marker-end="url(#arrow-w)"/>
+            <text class="loop-label" x="578" y="214" text-anchor="middle">Self-play trains the network (TD(λ))</text>
+          </svg>
+          <svg class="diagram-tall" viewBox="-4 -4 348 490" role="img" aria-label="Diagram: the game engine feeds a search over drop positions; a value network scores each resulting board; the bot plays the best move, and its games train the network.">
+            <defs><marker id="arrow-t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow-head" d="M0 0 L10 5 L0 10 z"/></marker></defs>
+            <rect class="node" x="0" y="0" width="300" height="84" rx="12"/>
+            <text class="node-title" x="14" y="26">Game engine</text>
+            <text class="node-text" x="14" y="50">Rust port of the game's physics.</text>
+            <text class="node-text" x="14" y="68">Same seed and drops, same game.</text>
+            <rect class="node" x="0" y="112" width="300" height="84" rx="12"/>
+            <text class="node-title" x="14" y="138">Search</text>
+            <text class="node-text" x="14" y="162">Simulate ~32 drop spots (and when),</text>
+            <text class="node-text" x="14" y="180">then the next fruit for the top 4.</text>
+            <rect class="node" x="0" y="224" width="300" height="84" rx="12"/>
+            <text class="node-title" x="14" y="250">Value network</text>
+            <text class="node-text" x="14" y="274">A small transformer reads the fruit</text>
+            <text class="node-text" x="14" y="292">as tokens and scores each result.</text>
+            <rect class="node" x="0" y="336" width="300" height="84" rx="12"/>
+            <text class="node-title" x="14" y="362">Best move</text>
+            <text class="node-text" x="14" y="386">Drop where the network expects</text>
+            <text class="node-text" x="14" y="404">the game to last longest.</text>
+            <line class="arrow" x1="150" y1="86" x2="150" y2="108" marker-end="url(#arrow-t)"/>
+            <line class="arrow" x1="150" y1="198" x2="150" y2="220" marker-end="url(#arrow-t)"/>
+            <line class="arrow" x1="150" y1="310" x2="150" y2="332" marker-end="url(#arrow-t)"/>
+            <path class="arrow" d="M302 378 H326 V266 H306" marker-end="url(#arrow-t)"/>
+            <text class="loop-label" x="0" y="448">Self-play: its own games train</text>
+            <text class="loop-label" x="0" y="466">the network with TD(λ).</text>
+          </svg>
+        </figure>
+
+        <div class="prose">
+          <ol>
+            <li><strong>A reproducible game engine.</strong> I built a Rust version of the game based on Matter.js physics. A deterministic engine lets me replay games from the same seed and compare candidate moves under the same conditions. The browser demonstration runs that engine through WebAssembly.</li>
+            <li><strong>Search possible moves.</strong> For each move, the bot simulates about 32 drop positions. For the four most promising positions, it also considers the next fruit. In the real-time version, it chooses <em>when</em> to drop as well, allowing it to act while the pile is still moving.</li>
+            <li><strong>Evaluate the board.</strong> A small, three-layer transformer represents each fruit as a token and uses the geometry between fruit to help predict how long the game will survive. That estimate helps the search choose between possible moves.</li>
+            <li><strong>Learn from self-play.</strong> The network trains on games generated by the bot, using TD(λ) to update its predictions from later outcomes. Training also restarts from difficult saved positions and constructed endgames, giving the network more practice with situations that occur rarely in full games.</li>
+          </ol>
+          <p>Profiling helped reduce the cost of these experiments. A fused attention kernel and scheduling simulation work per drop made evaluation about four times faster and training about 1.75 times faster in the benchmark runs, while preserving the bot's decisions.</p>
+
+          <h2 id="results">Results</h2>
+          <p>For each comparison, I kept the evaluation seeds fixed and separate from training. The results below distinguish between dropping only after the pile settles and dropping while it is still moving, as well as different amounts of search.</p>
+        </div>
+
+        <figure class="chart-figure">
+  <p class="chart-title" id="curve-title">Double-watermelon success rate during training</p>
+  <p class="chart-sub" id="curve-sub">Share of evaluation games with at least one double watermelon, using two drops of look-ahead. The shaded band shows a 95% Wilson confidence interval.</p>
+  <div class="chart" data-points='[{"x": 95.7, "games": 58151, "p": 0.245, "n": 192, "lo": 0.1896, "hi": 0.3104}, {"x": 201.1, "games": 75430, "p": 0.297, "n": 192, "lo": 0.2369, "hi": 0.3651}, {"x": 303.6, "games": 92231, "p": 0.281, "n": 192, "lo": 0.2222, "hi": 0.3484}, {"x": 404.6, "games": 108795, "p": 0.318, "n": 192, "lo": 0.2562, "hi": 0.3869}, {"x": 478.6, "games": 120916, "p": 0.388, "n": 384, "lo": 0.3406, "hi": 0.4376}, {"x": 603.6, "games": 141413, "p": 0.448, "n": 384, "lo": 0.399, "hi": 0.498}]' data-width="720">
+    <svg viewBox="0 0 720 300" role="img" aria-labelledby="curve-title curve-sub"><g class="grid"><line x1="46" x2="656" y1="179.3" y2="179.3"/><line x1="46" x2="656" y1="102.7" y2="102.7"/><line x1="46" x2="656" y1="26.0" y2="26.0"/></g><text x="38" y="260.0" text-anchor="end">0%</text><text x="38" y="183.3" text-anchor="end">20%</text><text x="38" y="106.7" text-anchor="end">40%</text><text x="38" y="30.0" text-anchor="end">60%</text><line class="axis-line" x1="46" x2="656" y1="256.0" y2="256.0"/><text x="46.0" y="278" text-anchor="middle">50k</text><text x="198.5" y="278" text-anchor="middle">75k</text><text x="351.0" y="278" text-anchor="middle">100k</text><text x="503.5" y="278" text-anchor="middle">125k</text><text x="656.0" y="278" text-anchor="middle">150k</text><text x="351.0" y="296" text-anchor="middle">games of self-play training</text><text class="annot" x="52" y="250.0">rule-based bot: 0%</text><line class="marker" x1="476.1" x2="476.1" y1="20" y2="256.0" stroke-dasharray="3 4"/><text class="annot" x="470.1" y="30" text-anchor="end">precision fix</text><path class="band" d="M95.7 137.0 L201.1 116.0 L303.6 122.4 L404.6 107.7 L478.6 88.2 L603.6 65.1 L603.6 103.0 L478.6 125.4 L404.6 157.8 L303.6 170.8 L201.1 165.2 L95.7 183.3 Z"/><path class="line" d="M95.7 162.1 L201.1 142.2 L303.6 148.3 L404.6 134.1 L478.6 107.3 L603.6 84.3"/><circle class="dot" cx="95.7" cy="162.1" r="4.5"/><circle class="dot" cx="201.1" cy="142.2" r="4.5"/><circle class="dot" cx="303.6" cy="148.3" r="4.5"/><circle class="dot" cx="404.6" cy="134.1" r="4.5"/><circle class="dot" cx="478.6" cy="107.3" r="4.5"/><circle class="dot" cx="603.6" cy="84.3" r="4.5"/><text class="end-label" x="613.6" y="88.3">44.8%</text><line class="cross" x1="0" x2="0" y1="26" y2="256.0" visibility="hidden"/><rect class="hit" x="34" y="26" width="634" height="230.0" fill="transparent"/></svg>
+    <div class="chart-tip" role="status"></div>
+  </div>
+  <details>
+    <summary>Show the numbers</summary>
+    <div class="table-scroll">
+    <table>
+      <thead><tr><th class="num">Training games</th><th class="num">Test games</th><th class="num">Double watermelon</th><th class="num">95% confidence interval</th></tr></thead>
+      <tbody>
+      <tr><td class="num">58,151</td><td class="num">192</td><td class="num">24.5%</td><td class="num">19.0%–31.0%</td></tr>
+      <tr><td class="num">75,430</td><td class="num">192</td><td class="num">29.7%</td><td class="num">23.7%–36.5%</td></tr>
+      <tr><td class="num">92,231</td><td class="num">192</td><td class="num">28.1%</td><td class="num">22.2%–34.8%</td></tr>
+      <tr><td class="num">108,795</td><td class="num">192</td><td class="num">31.8%</td><td class="num">25.6%–38.7%</td></tr>
+      <tr><td class="num">120,916</td><td class="num">384</td><td class="num">38.8%</td><td class="num">34.1%–43.8%</td></tr>
+      <tr><td class="num">141,413</td><td class="num">384</td><td class="num">44.8%</td><td class="num">39.9%–49.8%</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </details>
+</figure>
+
+        <div class="prose">
+          <p>A wider search improved results without retraining the network, at the cost of more computation per move:</p>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Same final network, different settings</th><th class="num">Test games</th><th class="num">Games with a double watermelon</th><th class="num">Double watermelons per game</th></tr></thead>
+            <tbody>
+              <tr><td>Rule-based bot (the starting point)</td><td class="num">192</td><td class="num">0%</td><td class="num">0</td></tr>
+              <tr><td>Turn-based rules, standard search</td><td class="num">192</td><td class="num">40.1%</td><td class="num">0.55</td></tr>
+              <tr><td>Turn-based rules, wider search (48 spots, top 8)</td><td class="num">192</td><td class="num">53.1%</td><td class="num">1.0</td></tr>
+              <tr><td>Real-time rules, 1 drop ahead</td><td class="num">192</td><td class="num">44.8%</td><td class="num">0.87</td></tr>
+              <tr><td>Real-time rules, 2 drops ahead</td><td class="num">40</td><td class="num">72.5%*</td><td class="num">2.3</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted">*The 72.5% result is based on 40 games, with a 95% Wilson confidence interval of approximately 57%–84%. Turn-based tests wait for the pile to settle before each drop. Real-time tests allow drops at 0.6-second intervals while fruit are still moving. Results under these different rules should be compared separately.</p>
+
+        <div class="prose">
+          <h2 id="learned">What I learned</h2>
+
+          <h3>1. Small numerical differences can change decisions</h3>
+          <p>The network's final layer used 16-bit floating point. Around the values it produced, rounding steps of about 0.016 could erase differences between candidate moves. Ties were then broken in favour of the leftmost drop. Running that layer in 32-bit increased the double-watermelon success rate from 36.0% to 40.2% across 768 evaluation games, without retraining.</p>
+
+          <h3>2. Drop timing changes the strategy</h3>
+          <p>Under the real-time rule the bot can drop before the pile settles. To check the gain wasn't simply from weighing more options, I ran a control: turn-based play with 128 drop spots, about as many options as real-time's 32 spots times 4 timings. The control reached 27.1%; real-time play reached 44.8% with the same network. This suggests that choosing when to drop helped beyond simply trying more positions. A fresh set of evaluation games also favoured the real-time version (30% vs 45%). The bot ended up dropping into a moving pile in 59% of its moves.</p>
+
+          <h3>3. Small evaluations can be misleading</h3>
+          <p>With 192 evaluation games and a success rate near 50%, a 95% confidence interval spans roughly seven percentage points on either side. Small differences between runs therefore need more evidence. I used larger evaluations of 576 or more games for closer comparisons and reported Wilson confidence intervals alongside the success rates.</p>
+
+          <h2 id="next">What's next</h2>
+          <ul>
+            <li>Train with the real-time dropping rule from the start.</li>
+            <li>Test how long the bot can continue after clearing a pair of watermelons, using a longer planning horizon and practice from positions just after a clear.</li>
+            <li>Test whether a larger network improves play enough to justify the extra computation.</li>
+          </ul>
+
+          <h2 id="built-with">Built with</h2>
+          <ul class="tags">
+            <li>Rust (engine, no dependencies)</li><li>WebAssembly</li><li>Python</li><li>PyTorch</li><li>NumPy</li><li>Reinforcement learning (TD(λ))</li><li>Transformers</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p>© <span data-year>2026</span> Philip Grundy</p>
+  </div>
+</footer>
+
+<script src="/assets/js/site.js?v=3" defer></script>
+<script src="/assets/js/suika-mini.js?v=2" defer></script>
+<script src="/assets/js/chart.js" defer></script>
+</body>
+</html>

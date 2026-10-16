@@ -1,0 +1,103 @@
+{
+ "mandelbrot": {
+  "name": "Mandelbrot zoom",
+  "passes": [
+   {
+    "name": "Image",
+    "type": "image",
+    "code": "int maxSteps = 100000;\nvec2 centre = vec2(0.30, 0.463);\n\nvec2 stepM(vec2 current, vec2 c)\n{\n    float re = current.x*current.x-current.y*current.y;\n    float im = 2.*current.x*current.y;\n    return vec2(re, im) + c;\n}\n\nint countSteps(vec2 start)\n{\n    vec2 x = start;\n    vec2 c = start;\n    for(int i=0;i<maxSteps;++i)\n    {\n        if (dot(x, x) > 4.)\n        {\n            return i;\n        }\n        x = stepM(x, c);\n    }\n    return maxSteps;\n}\n\nvec3 getColor(int id)\n{\n    int modId = id % 6;\n    float red = 0.4 + 0.1 * float(modId);  // Red varies slightly for depth\n    float blue = 0.6 + 0.1 * float(modId); // Blue varies slightly for richness\n    float lightness = 0.3 + 0.1 * float(modId); // Overall brightness variation\n\n    return vec3(red, 0.0, blue) * lightness; // Modulate lightness for contrast\n}\n\nvoid mainImage( out vec4 fragColor, in vec2 fragCoord )\n{\n    vec2 point = fragCoord;\n    point -= .5*iResolution.xy;\n    point *= pow(5., -iTime);\n    point += centre;\n    fragColor = vec4(getColor(countSteps(point)), 1.);\n}",
+    "output": "4dfGRr",
+    "inputs": []
+   }
+  ]
+ },
+ "game-of-life": {
+  "name": "Game of Life",
+  "passes": [
+   {
+    "name": "Buffer A",
+    "type": "buffer",
+    "code": "// Buffer A: Game of Life Logic & State\n// Set iChannel0 to \"Buffer A\" in Shadertoy\n\n// Simple pseudo-random number generator\nfloat random(vec2 st) {\n    return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);\n}\n\n// Function to get the state of a cell (0 for dead, 1 for alive)\n// texCoord is the pixel coordinate of the cell to check\nfloat getCellState(vec2 texCoord) {\n    // Wrap around for toroidal grid\n    vec2 uv = mod(texCoord, iResolution.xy) / iResolution.xy;\n    return texture(iChannel0, uv).r;\n}\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord) {\n    vec2 uv = fragCoord.xy / iResolution.xy;\n\n    // Initialization: On the first few frames, or if reset, fill with random values\n    // You can also detect a mouse click to reset/re-randomize if iMouse.z > 0.0\n    if (iFrame < 5 || (iMouse.z > 0.0 && length(iMouse.xy - fragCoord) < 50.0) ) { // Reset on click near mouse\n        // In Buffer A\n        float initialState = step(0.5, random(fragCoord.xy + iTime)); // More dense\n        //float initialState = step(0.7, random(fragCoord.xy + iTime)); // Adjust threshold for density\n        fragColor = vec4(initialState, 0.0, 0.0, 1.0);\n        return;\n    }\n\n    // Get current cell's state (0 or 1)\n    float currentState = getCellState(fragCoord);\n\n    // Count live neighbors\n    int liveNeighbors = 0;\n    for (int y = -1; y <= 1; y++) {\n        for (int x = -1; x <= 1; x++) {\n            if (x == 0 && y == 0) {\n                continue; // Don't count self\n            }\n            // Check neighbor state\n            liveNeighbors += int(getCellState(fragCoord + vec2(x, y)));\n        }\n    }\n\n    float newState = currentState; // Assume state doesn't change initially\n\n    // Apply Conway's Game of Life rules:\n    if (currentState > 0.5) { // Cell is alive\n        if (liveNeighbors < 2 || liveNeighbors > 3) {\n            newState = 0.0; // Dies (underpopulation or overpopulation)\n        }\n        // else it stays alive (2 or 3 neighbors)\n    } else { // Cell is dead\n        if (liveNeighbors == 3) {\n            newState = 1.0; // Becomes alive (reproduction)\n        }\n    }\n\n    // Output the new state (store in red channel)\n    fragColor = vec4(newState, 0.0, 0.0, 1.0);\n}\n",
+    "output": "4dXGR8",
+    "inputs": [
+     {
+      "channel": 0,
+      "id": "4dXGR8",
+      "type": "buffer",
+      "filter": "linear",
+      "wrap": "clamp"
+     }
+    ]
+   },
+   {
+    "name": "Image",
+    "type": "image",
+    "code": "// Image Shader: Renders the Game of Life state from Buffer A\n// Set iChannel0 to \"Buffer A\" in Shadertoy\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord) {\n    vec2 uv = fragCoord.xy / iResolution.xy;\n\n    // Read the cell state from Buffer A (stored in the red channel)\n    float cellState = texture(iChannel0, uv).r;\n\n    // Render: white for alive, black for dead\n    fragColor = vec4(vec3(cellState), 1.0);\n}\n",
+    "output": "4dfGRr",
+    "inputs": [
+     {
+      "channel": 0,
+      "id": "4dXGR8",
+      "type": "buffer",
+      "filter": "linear",
+      "wrap": "clamp"
+     }
+    ]
+   }
+  ]
+ },
+ "wobble": {
+  "name": "Wobble",
+  "passes": [
+   {
+    "name": "Buffer A",
+    "type": "buffer",
+    "code": "vec3 hsv2rgb(vec3 c) \n{\n    vec3 p = abs(fract(c.x + vec3(0.0, 2.0/3.0, 1.0/3.0)) * 6.0 - 3.0);\n    return c.z * mix(vec3(1.0), clamp(p - 1.0, 0.0, 1.0), c.y);\n}\n\n\nfloat gauss( float x, float mid, float spread, float peak )\n{\n    float z = x - mid;\n    return peak * exp(-z*z/(spread*spread));\n}\n\n\nfloat hashwithoutsine11(float p)\n{\n    p = fract(p * .1031);\n    p *= p + 33.33;\n    p *= p + p;\n    return fract(p);\n}\n\nvoid mainImage( out vec4 fragColor, in vec2 fragCoord )\n{   \n    float wobble;\n    wobble += floor(gauss(fragCoord.y, 0.45*iResolution.y, 0.25*iResolution.y, 0.225*iResolution.x*sin(iTime)));\n    wobble += floor(gauss(fragCoord.y, 0.55*iResolution.y, 0.25*iResolution.y, 0.125*iResolution.x*cos(iTime*2.315)));\n    float m = hashwithoutsine11(fragCoord.x + float(iFrame) + wobble);\n    vec3 c = vec3(m-.75, 0.1, m);\n    fragColor = vec4(hsv2rgb(c), 1.0);\n}",
+    "output": "4dXGR8",
+    "inputs": []
+   },
+   {
+    "name": "Image",
+    "type": "image",
+    "code": "void mainImage(out vec4 fragColor, in vec2 fragCoord) {\n    vec2 uv = fragCoord / iResolution.xy;\n\n    // Sample the pattern from Buffer A\n    vec4 bufferAOutput = texture(iChannel0, uv);\n\n    // Calculate the radial distance from the center\n    vec2 center = vec2(0.5, 0.5);\n    float dist = length(uv - center);\n\n    // Create a vignette effect\n    float vignette = smoothstep(0.6, 1.0, 1.0 - dist);\n\n    // Adjust vignette strength\n    float strength = 0.4; // Lower values make it less strong\n    float blend = mix(1.3, vignette, strength);\n\n    // Apply vignette as a subtle blend\n    vec3 color = bufferAOutput.rgb * blend;\n\n    fragColor = vec4(color, 1.0);\n}\n",
+    "output": "4dfGRr",
+    "inputs": [
+     {
+      "channel": 0,
+      "id": "4dXGR8",
+      "type": "buffer",
+      "filter": "linear",
+      "wrap": "clamp"
+     }
+    ]
+   }
+  ]
+ },
+ "chromatic-shear": {
+  "name": "Chromatic shear",
+  "passes": [
+   {
+    "name": "Buffer A",
+    "type": "buffer",
+    "code": "// Inverse method: distance-based probability dust\n\n// Random function\nfloat hash(vec2 p)\n{\n    p = fract(p * 0.3183099 + vec2(0.71,0.113));\n    p *= 17.0;\n    return fract(p.x * p.y * (p.x + p.y));\n}\n\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = fragCoord.xy / iResolution.xy;\n    \n    // Centered coords (-1 to 1)\n    vec2 centered = uv * 2.0 - 1.0;\n    centered.x *= iResolution.x / iResolution.y; // correct aspect ratio\n    \n    // Distance from center\n    float d = length(centered);\n    \n    // Calculate a probability falloff\n    float prob = smoothstep(0.9, 0.0, d); \n    // (d=0 → prob≈1.0, d>0.6 → prob≈0.0)\n    \n    // Generate a random number per pixel\n    \n    vec2 seed = fragCoord;\n    float noise = hash(seed);\n    noise += fract(iTime);\n    noise = fract(noise);\n    \n    // Compare noise to probability\n    float dust = step(noise, prob);\n    \n    // Final color\n    fragColor = vec4(vec3(dust), 1.0);\n}\n",
+    "output": "4dXGR8",
+    "inputs": []
+   },
+   {
+    "name": "Image",
+    "type": "image",
+    "code": "#define ON 1\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = fragCoord.xy / iResolution.xy;\n    vec2 pixel = 1.0 / iResolution.xy;\n\n    // Safe massive shift using sine wave\n    float strength = cos(iTime); // ~5% of screen width\n    float rowShift = strength * sin(6.2831 * fragCoord.y / iResolution.y + iTime * 0.5);\n\n    vec2 shift = vec2(rowShift, 0.0); // horizontal only\n\n    // Safe UV function\n    vec2 safeUV = abs(fract(uv + shift));\n    vec2 safeUVG = abs(fract(uv));\n    vec2 safeUVB = abs(fract(uv - shift));\n\n    vec3 col;\n    col.r = texture(iChannel0, safeUV).r;\n    col.g = texture(iChannel0, safeUVG).g;\n    col.b = texture(iChannel0, safeUVB).b;\n\n    fragColor = vec4(col, 1.0);\n}\n\n\n\n",
+    "output": "4dfGRr",
+    "inputs": [
+     {
+      "channel": 0,
+      "id": "4dXGR8",
+      "type": "buffer",
+      "filter": "linear",
+      "wrap": "clamp"
+     }
+    ]
+   }
+  ]
+ }
+}

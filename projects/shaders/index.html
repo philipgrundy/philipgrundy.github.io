@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shader experiments · Philip Grundy</title>
+<meta name="description" content="Four live GLSL experiments by Philip Grundy: a Mandelbrot zoom, Conway's Game of Life, animated noise and chromatic shear.">
+<meta property="og:title" content="Shader experiments · Philip Grundy">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#f4f5f3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#070b18" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/assets/img/favicon.svg?v=2" type="image/svg+xml">
+<script>try{var t=localStorage.getItem("theme");if(t==="dark"||t==="light")document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="/assets/css/site.css?v=8">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="wrap">
+    <p class="site-title site-title--small"><a href="/">Philip Grundy</a></p>
+    <button class="theme-toggle" type="button" aria-label="Toggle colour theme" hidden><svg class="theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg><svg class="theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.9 13.4A9 9 0 0 1 10.6 3.1a9 9 0 1 0 10.3 10.3Z"/></svg></button>
+  </div>
+</header>
+<main id="main">
+  <div class="wrap">
+    <p class="breadcrumb"><a href="/projects/">Projects</a> / Shader experiments</p>
+    <h1 class="article-title">Shader experiments</h1>
+    <p class="page-intro">Small experiments in maths, motion and colour, originally made in Shadertoy. Each one is running live on your GPU. Pause a preview to take a closer look, or open its code.</p>
+    <noscript><p class="callout">Enable JavaScript to run the previews. The <a href="/assets/shaders/shaders.json">shader source</a> is also available as a download.</p></noscript>
+    <div class="shader-grid">
+      <article class="box shader-card" data-shader="mandelbrot" data-loop="9" aria-labelledby="s-mandelbrot">
+        <h2 class="box-title" id="s-mandelbrot">Mandelbrot zoom</h2>
+        <div class="box-body">
+          <canvas width="512" height="512" role="img" aria-label="A purple Mandelbrot fractal, zooming into finer detail">A live Mandelbrot fractal.</canvas>
+          <p>A continuous dive into the Mandelbrot set. The purple bands mark how quickly each point escapes; the zoom starts again every nine seconds.</p>
+          <div class="shader-controls"><button class="btn" type="button" data-shader-toggle disabled>Pause</button><button class="btn" type="button" data-shader-restart aria-label="Restart Mandelbrot zoom" disabled>Restart</button></div>
+          <p class="muted shader-status" data-shader-status role="status">Loading preview…</p>
+          <details><summary>View code</summary><div class="shader-source" data-shader-source></div></details>
+        </div>
+      </article>
+      <article class="box shader-card" data-shader="game-of-life" aria-labelledby="s-life">
+        <h2 class="box-title" id="s-life">Game of Life</h2>
+        <div class="box-body">
+          <canvas class="shader-cells" width="512" height="512" role="img" aria-label="Conway's Game of Life: white cells evolving on a black grid">A live cellular automaton.</canvas>
+          <p>Conway's rules, one cell per shader pixel. Each generation reads the previous one. Click or drag across the grid to seed new cells.</p>
+          <div class="shader-controls"><button class="btn" type="button" data-shader-toggle disabled>Pause</button><button class="btn" type="button" data-shader-restart aria-label="Restart Game of Life" disabled>Restart</button></div>
+          <p class="muted shader-status" data-shader-status role="status">Loading preview…</p>
+          <details><summary>View code</summary><div class="shader-source" data-shader-source></div></details>
+        </div>
+      </article>
+      <article class="box shader-card" data-shader="wobble" aria-labelledby="s-wobble">
+        <h2 class="box-title" id="s-wobble">Wobble</h2>
+        <div class="box-body">
+          <canvas width="512" height="512" role="img" aria-label="Bands of colourful noise rippling from side to side">An animated colour pattern.</canvas>
+          <p>Columns of coloured noise bend under overlapping waves. A second pass adds a soft vignette around the pattern.</p>
+          <div class="shader-controls"><button class="btn" type="button" data-shader-toggle disabled>Pause</button><button class="btn" type="button" data-shader-restart aria-label="Restart Wobble" disabled>Restart</button></div>
+          <p class="muted shader-status" data-shader-status role="status">Loading preview…</p>
+          <details><summary>View code</summary><div class="shader-source" data-shader-source></div></details>
+        </div>
+      </article>
+      <article class="box shader-card" data-shader="chromatic-shear" aria-labelledby="s-shear">
+        <h2 class="box-title" id="s-shear">Chromatic shear</h2>
+        <div class="box-body">
+          <canvas width="512" height="512" role="img" aria-label="A cloud of speckled light splitting into moving red, green and blue waves">A chromatic shear effect.</canvas>
+          <p>A cloud of light made from probability and noise. Its red and blue channels shift in opposite directions, pulling the image apart.</p>
+          <div class="shader-controls"><button class="btn" type="button" data-shader-toggle disabled>Pause</button><button class="btn" type="button" data-shader-restart aria-label="Restart Chromatic shear" disabled>Restart</button></div>
+          <p class="muted shader-status" data-shader-status role="status">Loading preview…</p>
+          <details><summary>View code</summary><div class="shader-source" data-shader-source></div></details>
+        </div>
+      </article>
+    </div>
+  </div>
+</main>
+<footer class="site-footer"><div class="wrap"><p>© <span data-year>2026</span> Philip Grundy</p></div></footer>
+<script src="/assets/js/site.js?v=3" defer></script>
+<script src="/assets/js/shaders.js?v=3" defer></script>
+</body>
+</html>

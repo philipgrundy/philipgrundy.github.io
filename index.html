@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Philip Grundy</title>
+<meta name="description" content="Philip Grundy's portfolio: data science and machine learning projects, including a self-play bot for Suika, the watermelon game, plus CV and contact links.">
+<meta property="og:title" content="Philip Grundy">
+<meta property="og:description" content="Data science and machine learning projects, including a self-play bot for Suika, the watermelon game.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#f4f5f3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#070b18" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/assets/img/favicon.svg?v=2" type="image/svg+xml">
+<script>try{var t=localStorage.getItem("theme");if(t==="dark"||t==="light")document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="/assets/css/site.css?v=8">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="wrap">
+    <div>
+      <h1 class="site-title"><a href="/">Philip Grundy</a></h1>
+      <p class="tagline">Mathematics (First, 92.4%) · Python · machine learning</p>
+    </div>
+    <button class="theme-toggle" type="button" aria-label="Toggle colour theme" hidden><svg class="theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg><svg class="theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.9 13.4A9 9 0 0 1 10.6 3.1a9 9 0 1 0 10.3 10.3Z"/></svg></button>
+  </div>
+</header>
+
+<main id="main">
+  <div class="wrap home-grid">
+   <div class="stack area-left">
+
+    <section class="box" aria-labelledby="links-title">
+      <h2 class="box-title" id="links-title">Links</h2>
+      <div class="box-body">
+        <ul class="link-list">
+          <li style="--c:#f2c14e"><a href="/cv/PhilipGrundy_CV.pdf?v=2" target="_blank" rel="noopener">CV</a></li>
+          <li style="--c:#2e8b3d"><a href="https://www.linkedin.com/in/philip-grundy-b4a55b2a1">LinkedIn</a></li>
+          <li style="--c:#7b3fa0"><a href="https://github.com/philipgrundy">GitHub</a></li>
+          <li style="--c:#f4a259"><details class="contact-details"><summary>Contact me</summary><p>The best way to reach me is via <a href="https://www.linkedin.com/in/philip-grundy-b4a55b2a1">LinkedIn</a>.</p></details></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="box" aria-labelledby="projects-title">
+      <h2 class="box-title" id="projects-title">Projects</h2>
+      <div class="box-body">
+        <ul class="link-list">
+          <li><a href="/projects/suika/">Suika bot</a></li>
+          <li><a href="/projects/shaders/">Shader experiments</a></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="box" aria-labelledby="about-title">
+      <h2 class="box-title" id="about-title">About me</h2>
+      <div class="box-body">
+        <p>Hi, I'm Philip. I have a first-class maths degree from the University of Sheffield, and I enjoy projects where maths meets code: machine learning, simulation and graphics.</p>
+        <p>My latest is a bot that taught itself Suika, a fruit-stacking game, by playing against itself. You can watch it play on this page, or read <a href="/projects/suika/">how it works</a>.</p>
+        <p>I'm looking for a technical role where I can put maths and programming to practical use. The best way to reach me is <a href="https://www.linkedin.com/in/philip-grundy-b4a55b2a1">LinkedIn</a>.</p>
+      </div>
+    </section>
+
+   </div>
+
+    <section class="box area-suika" aria-labelledby="suika-title">
+      <h2 class="box-title" id="suika-title">Live demo: Suika bot</h2>
+      <div class="box-body">
+        <div class="suika-player" data-suika data-wasm="/assets/suika/engine.wasm" data-game="/assets/suika/best-game.json" data-start="345" data-speed="2">
+          <p class="headline">My bot playing <a href="https://playsuikagame.com/">Suika</a>, a Japanese fruit-stacking game. It taught itself through self-play, and in about half of its games it pulls off the game's hardest move: <strong>merging two watermelons</strong>.</p>
+          <div class="suika-stage">
+            <canvas width="556" height="720" role="img" aria-label="The Suika bot playing its best game: fruit drop into a box and merge into bigger fruit."></canvas>
+            <div class="suika-flash" aria-hidden="true">Double watermelon!</div>
+          </div>
+          <div class="suika-hud">
+            <span>Drop <strong data-drop>0</strong></span>
+            <span>Score <strong data-score>0</strong></span>
+            <span>Double watermelons <strong data-clears>0</strong></span>
+          </div>
+          <div class="suika-controls">
+            <button class="btn" type="button" data-toggle>❚❚ Pause</button>
+            <a href="/projects/suika/">How it works →</a>
+          </div>
+          <p class="muted" data-status></p>
+          <p class="muted">The bot's best game, replayed live in your browser at 2× speed on the same physics engine it trained on.</p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p>© <span data-year>2026</span> Philip Grundy</p>
+  </div>
+</footer>
+
+<script src="/assets/js/site.js?v=3" defer></script>
+<script src="/assets/js/suika-mini.js?v=2" defer></script>
+</body>
+</html>

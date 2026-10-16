@@ -167,7 +167,6 @@ code { font-family: var(--font-mono); font-size: .9em; }
   text-shadow: var(--title-shadow);
 }
 .site-title a { color: inherit; text-decoration: none; }
-.tagline { margin: 8px 0 0; color: var(--ink-2); font-size: 17px; }
 .site-title--small { font-size: clamp(28px, 5vw, 40px); }
 .theme-toggle {
   display: inline-grid; place-items: center; flex: none;

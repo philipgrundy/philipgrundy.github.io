@@ -1,6 +1,9 @@
 // A small WebGL2 host for the original Shadertoy Image / Buffer A passes.
 (() => {
   const motion = matchMedia("(prefers-reduced-motion: reduce)");
+  // Render at half the displayed width and height (a quarter of the pixels) and let the
+  // browser scale it up: about four times less work for the GPU.
+  const renderScale = 0.5;
   const library = fetch("/assets/shaders/shaders.json?v=2").then(response => {
     if (!response.ok) throw new Error("Shader source could not be loaded.");
     return response.json();
@@ -127,7 +130,7 @@
       const displayWidth = canvas.getBoundingClientRect().width;
       const pixelRatio = window.devicePixelRatio || 1;
       const limit = Math.min(gl.getParameter(gl.MAX_TEXTURE_SIZE), gl.getParameter(gl.MAX_RENDERBUFFER_SIZE));
-      const width = Math.min(limit, Math.max(1, Math.round(displayWidth * pixelRatio)));
+      const width = Math.min(limit, Math.max(1, Math.round(displayWidth * pixelRatio * renderScale)));
       const height = width;
       if (width === canvas.width && height === canvas.height && frame) return;
       canvas.width = width;

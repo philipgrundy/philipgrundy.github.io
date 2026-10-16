@@ -286,7 +286,7 @@ main { padding-bottom: 32px; }
 .shader-card .box-body { display: grid; gap: 14px; }
 .shader-card .box-body > * { margin: 0; }
 .shader-card canvas { width: 100%; height: auto; aspect-ratio: 1; background: #090911; border-radius: calc(var(--radius) / 2); touch-action: pan-y; }
-.shader-card .shader-cells { touch-action: none; }
+.shader-card .shader-cells { touch-action: none; image-rendering: pixelated; }
 .shader-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .shader-controls a { margin-left: auto; font-size: 14px; }
 .shader-controls button:disabled { opacity: .5; cursor: wait; }

@@ -4,6 +4,21 @@
   // Render at half the displayed width and height (a quarter of the pixels) and let the
   // browser scale it up: about four times less work for the GPU.
   const renderScale = 0.5;
+  // Only one preview animates at a time: the one you last played or touched, otherwise the
+  // one most on screen. The rest hold their last frame, so the GPU runs a single shader.
+  const players = [];
+  let chosen = null, active = null;
+  function refreshActive() {
+    if (chosen && chosen.ratio === 0) chosen = null;
+    let best = null;
+    for (const player of players) {
+      if (player.ratio > 0 && (!best || player.ratio > best.ratio + 0.01)) best = player;
+    }
+    const next = chosen || best;
+    if (next === active) return;
+    active = next;
+    for (const player of players) player.wake();
+  }
   const library = fetch("/assets/shaders/shaders.json?v=2").then(response => {
     if (!response.ok) throw new Error("Shader source could not be loaded.");
     return response.json();
@@ -36,16 +51,22 @@
     let visible = false, ready = false, failed = false, paused = motion.matches;
     let animation = 0, lastStamp = null, elapsed = 0, frame = 0, front = 0;
     let mouse = [0, 0, 0, 0];
+    const me = { ratio: 0, wake() { stop(); schedule(); } };
+    players.push(me);
+    // Changes applied only when compiling (a lower step cap, say); "View code" shows the original.
+    const replaceFrom = card.dataset.replaceFrom, replaceTo = card.dataset.replaceTo;
+    const runnable = code => replaceFrom && code.includes(replaceFrom) ? code.split(replaceFrom).join(replaceTo) : code;
 
     function updateStatus() {
       if (failed || !ready) return;
-      const state = paused ? "paused" : visible && !document.hidden ? "running" : "offscreen";
+      const playing = !paused && active === me;
+      const state = paused ? "paused" : active !== me ? "waiting" : visible && !document.hidden ? "running" : "offscreen";
       if (card.dataset.state === state) return;
       card.dataset.state = state;
       status.textContent = paused ? "Paused" : "";
-      toggle.textContent = paused ? "Play" : "Pause";
-      toggle.setAttribute("aria-label", `${paused ? "Play" : "Pause"} ${title}`);
-      toggle.setAttribute("aria-pressed", String(paused));
+      toggle.textContent = playing ? "Pause" : "Play";
+      toggle.setAttribute("aria-label", `${playing ? "Pause" : "Play"} ${title}`);
+      toggle.setAttribute("aria-pressed", String(!playing));
     }
 
     function stop() {
@@ -56,7 +77,7 @@
 
     function schedule() {
       updateStatus();
-      if (ready && !failed && visible && !document.hidden && !paused && !animation) {
+      if (ready && !failed && visible && !document.hidden && !paused && active === me && !animation) {
         animation = requestAnimationFrame(animate);
       }
     }
@@ -67,6 +88,8 @@
       card.dataset.state = "error";
       status.textContent = error.message || "This preview could not start.";
       toggle.disabled = restart.disabled = true;
+      me.ratio = 0;
+      refreshActive();
     }
 
     function compile(type, source) {
@@ -83,7 +106,7 @@
 
     function program(pass) {
       const vertex = compile(gl.VERTEX_SHADER, vertexSource);
-      const fragment = compile(gl.FRAGMENT_SHADER, header + pass.code + "\nvoid main() { mainImage(fragColor, gl_FragCoord.xy); }");
+      const fragment = compile(gl.FRAGMENT_SHADER, header + runnable(pass.code) + "\nvoid main() { mainImage(fragColor, gl_FragCoord.xy); }");
       const handle = gl.createProgram();
       gl.attachShader(handle, vertex);
       gl.attachShader(handle, fragment);
@@ -183,7 +206,7 @@
 
     function animate(stamp) {
       animation = 0;
-      if (!visible || paused || document.hidden || failed) { lastStamp = null; return; }
+      if (!visible || paused || document.hidden || failed || active !== me) { lastStamp = null; return; }
       // Keep playback bounded at 30 fps; off-screen time never advances the shaders.
       if (lastStamp !== null && stamp - lastStamp < 1000 / 30) { schedule(); return; }
       const delta = lastStamp === null ? 0 : Math.min((stamp - lastStamp) / 1000, 0.1);
@@ -199,6 +222,8 @@
       mouse[1] = Math.max(0, Math.min(canvas.height, (rect.bottom - event.clientY) / rect.height * canvas.height));
     }
     canvas.addEventListener("pointerdown", event => {
+      chosen = me;
+      refreshActive();
       pointer(event);
       mouse[2] = Math.max(0.001, mouse[0]);
       mouse[3] = Math.max(0.001, mouse[1]);
@@ -212,16 +237,25 @@
     function release() { mouse[2] = -Math.abs(mouse[2]); mouse[3] = -Math.abs(mouse[3]); }
     canvas.addEventListener("pointerup", release);
     canvas.addEventListener("pointercancel", release);
-    toggle.addEventListener("click", () => { paused = !paused; stop(); schedule(); });
-    restart.addEventListener("click", () => { stop(); reset(); });
+    toggle.addEventListener("click", () => {
+      // Play on a waiting preview makes it the one that runs; Pause stops it.
+      if (paused || active !== me) { paused = false; chosen = me; } else paused = true;
+      refreshActive();
+      stop();
+      schedule();
+    });
+    restart.addEventListener("click", () => { chosen = me; refreshActive(); stop(); reset(); });
     document.addEventListener("visibilitychange", () => { stop(); schedule(); });
     motion.addEventListener("change", event => { if (event.matches) { paused = true; stop(); schedule(); } });
     canvas.addEventListener("webglcontextlost", () => fail(new Error("Graphics paused by your browser. Reload this page to restart.")));
     new IntersectionObserver(entries => {
-      visible = entries[0].isIntersecting;
+      const entry = entries[entries.length - 1];
+      me.ratio = entry.isIntersecting ? entry.intersectionRatio : 0;
+      visible = me.ratio > 0;
+      refreshActive();
       stop();
       schedule();
-    }, { threshold: 0 }).observe(canvas);
+    }, { threshold: [0, 0.1, 0.25, 0.5, 0.75, 1] }).observe(canvas);
 
     library.then(data => {
       const shader = data[card.dataset.shader];
